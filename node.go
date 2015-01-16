@@ -10,8 +10,8 @@ package cone
 // |keyPart|\n|v,valueLength|valueData........|
 
 type childNode struct {
-	start   int
-	keyPart string
+	keyPart string //the part of the key it represents
+	start   int    //the start point in the file for this node
 }
 
 // The node struct is used to represent the key/value pairs on disk
