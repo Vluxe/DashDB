@@ -1,4 +1,4 @@
-# coneDB
+# DashDB
 consistent, scalable, and safe key-value DB in Go.
 
 Working theory on how to build an ACID compliant, yet fast key value store in Go.
