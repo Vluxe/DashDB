@@ -1,6 +1,7 @@
 package dash
 
 import (
+	"fmt"
 	"os"
 	"sync"
 )
@@ -55,20 +56,23 @@ func (d *Dash) runQueue(f *os.File) {
 	for {
 		select {
 		case pair := <-d.wQueue:
-			f.Write([]byte(pair.key + "=" + pair.value + "\n")) //need to figure out the right delimiters
+			f.Write([]byte(fmt.Sprintf("%d%s%d%s", len(pair.key), pair.key, len(pair.value), pair.value)))
 		}
 	}
 }
 
 //loads the data stored in the db file
-func (d *Dash) loadData() {
+func (d *Dash) loadData() error {
 	f, err := os.OpenFile(d.dbFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	defer f.Close()
-	for {
-		//need to figure out the right delimiter characters...
-		//b := make([]byte, 1024)
-		//f.Read(b)
-
-		return
+	if err != nil {
+		return err
 	}
+	defer f.Close()
+	// b := make([]byte, 1)
+	// f.Read(b)
+	// count := Int(b)
+	for {
+		//read each key & value out in this loop
+	}
+	return nil
 }
