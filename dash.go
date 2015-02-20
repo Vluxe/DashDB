@@ -93,7 +93,7 @@ func (d *Dash) writePair(p pair) {
 
 //opens the db file then starts the disk queue
 func (d *Dash) startDiskQueue() error {
-	f, err := os.OpenFile(d.dbFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := d.openDBFile()
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func (d *Dash) runDiskQueue(f *os.File) {
 					os.Rename(tempPath, d.dbFile)
 					tempFile.Close()
 					f.Close()
-					f, _ = os.OpenFile(d.dbFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+					f, _ = d.openDBFile()
 					info, _ := f.Stat()
 					size = info.Size()
 				}
@@ -158,9 +158,13 @@ func buildDiskAction(action, key, value string) []byte {
 	return []byte(fmt.Sprintf("%d\n%s%d\n%s%d\n%s", len(action), action, len(key), key, len(value), value))
 }
 
+func (d *Dash) openDBFile() (*os.File, error) {
+	return os.OpenFile(d.dbFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+}
+
 //loads the data stored in the db file into the store.
 func (d *Dash) loadData() error {
-	f, err := os.OpenFile(d.dbFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := d.openDBFile()
 	if err != nil {
 		return err
 	}
