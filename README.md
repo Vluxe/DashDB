@@ -4,7 +4,7 @@ This database is designed to be used with [conductor](https://github.com/Vluxe/c
 
 ## Examples
 
-```
+```go
   d, err := dash.New()
   if err != nil {
     fmt.Println(err)
