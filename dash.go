@@ -1,8 +1,11 @@
 package dash
 
 import (
+	//"bytes"
 	"fmt"
+	"io"
 	"os"
+	"strconv"
 	"sync"
 )
 
@@ -21,6 +24,7 @@ type pair struct {
 //create a new Dash instance
 func New() (*Dash, error) {
 	d := Dash{store: make(map[string]string), mutex: new(sync.Mutex), wQueue: make(chan pair), dbFile: "dash.db"}
+	d.loadData()
 	err := d.startQueue()
 	return &d, err
 }
@@ -56,7 +60,7 @@ func (d *Dash) runQueue(f *os.File) {
 	for {
 		select {
 		case pair := <-d.wQueue:
-			f.Write([]byte(fmt.Sprintf("%d%s%d%s", len(pair.key), pair.key, len(pair.value), pair.value)))
+			f.Write([]byte(fmt.Sprintf("%d\n%s%d\n%s", len(pair.key), pair.key, len(pair.value), pair.value)))
 		}
 	}
 }
@@ -68,11 +72,63 @@ func (d *Dash) loadData() error {
 		return err
 	}
 	defer f.Close()
-	// b := make([]byte, 1)
-	// f.Read(b)
-	// count := Int(b)
+	offset := 0
+	sliceStart := 0
+	key := ""
 	for {
-		//read each key & value out in this loop
+		buffer, err, size := readData(f)
+		if err != nil {
+			return err
+		}
+		if size <= 0 {
+			return nil
+		}
+		for offset < size {
+			if buffer[offset] == '\n' {
+				count := buffer[sliceStart:offset]
+				num, err := strconv.Atoi(count)
+				if err != nil {
+					return err
+				}
+				//fmt.Println("num is:", num)
+				offset++
+				//check to see if the buffer needs to be expanded
+				for offset+num > size {
+					b, err, s := readData(f)
+					if err != nil {
+						return err
+					}
+					size = s + (size - offset)
+					buffer = buffer[offset:] + b
+					offset = 0
+				}
+				data := buffer[offset:(offset + num)]
+				//fmt.Println("data is:", data)
+				offset += num
+				if key == "" {
+					key = data
+				} else {
+					// fmt.Println("key:", key)
+					// fmt.Println("value:", data)
+					d.store[key] = data
+					key = ""
+				}
+				sliceStart = offset
+			}
+			offset++
+		}
 	}
 	return nil
+}
+
+func readData(f *os.File) (string, error, int) {
+	b := make([]byte, 2048)
+	size, err := f.Read(b)
+	if err != nil && err != io.EOF {
+		return "", err, 0
+	}
+	if size <= 0 {
+		return "", nil, size
+	}
+	return string(b), nil, size
 }
